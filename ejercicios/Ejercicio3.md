@@ -13,3 +13,5 @@ Para ejecutar los scripts de Python, se requiere de los siguientes paquetes:
 cd ejercicios
 python3 Ejercicio3.py
 ```
+
+Archivo: [Ejercicio3.py](./Ejercicio3.py)
