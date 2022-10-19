@@ -34,7 +34,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/** 
+/**
  * \file   tarea04.c
  *         Contains the processing function
  * \author Pablo Alvarado
@@ -42,18 +42,55 @@
  * \date   August 9th, 2010
  */
 
-#include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+/* For alpha = 0.4 */
+#define DEFAULT_ALPHA 0.4
+/* For k = Fs * 0.25 */
+#define DEFAULT_DECIMATION 0.25
 
 /**
- * You may need some global values 
+ * You may need some global values
  */
+static int k;
+static float alpha;
+static float *out_samples;
+static int idx;
+
+
+static float get_k_sample(int i) {
+  /* modulus makes the array circular */
+  return out_samples[(idx + i) % k];
+}
+
+
+static void set_k_sample(int i, float value) {
+  /* modulus makes the array circular */
+  out_samples[(idx + i) % k] = value;
+}
 
 /**
  * This method is called before the real processing starts.
  * You may use it to initialize whatever you need to.
  */
 void init(const unsigned int Fs) {
+#ifndef DECIMATION
+  k = (int)((float)Fs * DEFAULT_DECIMATION);
+#else
+  k = (float)Fs * DECIMATION;
+#endif
+
+#ifndef ALPHA
+  alpha = (float) DEFAULT_ALPHA;
+#else
+  alpha = (float) ALPHA;
+#endif
+
+  /* Calloc sets everything to zero, making the sys in steady state */
+  out_samples = calloc(k, sizeof(float));
+  idx = 0;
 }
 
 /**
@@ -66,22 +103,17 @@ void init(const unsigned int Fs) {
  *
  * @return zero if error, or 1 otherwise.
  */
-int process(const unsigned int Fs,
-            const int nframes,
-            const float* in,
-            float* out) {
-  /*
-   * PUT YOUR CODE IN HERE
-   */
+int process(const unsigned int Fs, const int nframes, const float *in,
+            float *out) {
 
-  /* This line just copies the data from input to output. REMOVE IT! */
-  memcpy(out, in, sizeof(float)*nframes);
+  /* Apply filter */
+  for(int i = 0; i < nframes; ++i){
+    /* (1-a)x[n] + alpha y[n-k] */
+    out[i] = (1.f - alpha) * in[i] + alpha * get_k_sample(i);
+    set_k_sample(i, out[i]);
+  }
 
-  /* Debug stuff */
-  /*
-  printf("In: %.5f, Out: %.5f\n",*in,*out);
-  fflush(stdout);
-  */
-  return 0; // everything is ok 
+  idx += nframes;
+
+  return 0; // everything is ok
 }
-
